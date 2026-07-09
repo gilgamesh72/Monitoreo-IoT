@@ -125,9 +125,9 @@ export default function SensorCard({
 
           {barMax !== undefined && (
             <>
-              <div className="w-full bg-slate-700/60 rounded-full h-1.5 overflow-hidden">
+              <div className="w-full bg-slate-700/60 rounded-full h-2.5 overflow-hidden">
                 <div
-                  className={`h-1.5 rounded-full transition-all duration-700 ease-out ${cfg.bar}`}
+                  className={`h-2.5 rounded-full transition-all duration-700 ease-out ${cfg.bar}`}
                   style={{ width: `${barPct}%` }}
                 />
               </div>

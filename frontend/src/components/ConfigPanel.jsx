@@ -13,11 +13,14 @@ const rawToLuzPct  = (raw) => Math.round(((raw ?? 0) / 4095) * 100)
 const luzPctToRaw  = (pct) => Math.round((pct / 100) * 4095)
 
 // ─────────────────────────────────────────────────────
-//  Componente Slider con porcentaje
+//  Componente Slider con porcentaje/unidad custom
 // ─────────────────────────────────────────────────────
-function SliderField({ label, value, onChange, description, colorFrom, colorTo }) {
+function SliderField({ label, value, onChange, description, colorFrom, colorTo, min = 0, max = 100, unit = '%' }) {
   const fillColor = colorFrom ?? '#06b6d4'   // cyan-500 por defecto
   const trackBg   = colorTo   ?? '#1e293b'   // slate-800
+  
+  // Calcula el progreso en base a min y max personalizados
+  const pct = Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100))
 
   return (
     <div className="space-y-1.5">
@@ -25,14 +28,16 @@ function SliderField({ label, value, onChange, description, colorFrom, colorTo }
         <label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
           {label}
         </label>
-        <span className="text-xl font-bold text-white tabular-nums">{value}<span className="text-sm text-slate-400 font-normal">%</span></span>
+        <span className="text-xl font-bold text-white tabular-nums">
+          {value}<span className="text-sm text-slate-400 font-normal">{unit}</span>
+        </span>
       </div>
 
       {/* Track con relleno coloreado */}
       <input
         type="range"
-        min={0}
-        max={100}
+        min={min}
+        max={max}
         step={1}
         value={value}
         onChange={e => onChange(Number(e.target.value))}
@@ -57,21 +62,21 @@ function SliderField({ label, value, onChange, description, colorFrom, colorTo }
           [&::-moz-range-thumb]:cursor-pointer
         "
         style={{
-          background: `linear-gradient(to right, ${fillColor} 0%, ${fillColor} ${value}%, #334155 ${value}%, #334155 100%)`,
+          background: `linear-gradient(to right, ${fillColor} 0%, ${fillColor} ${pct}%, #334155 ${pct}%, #334155 100%)`,
         }}
       />
 
       <div className="flex justify-between text-[9px] text-slate-600">
-        <span>0%</span>
+        <span>{min}{unit}</span>
         {description && <span className="text-slate-500 italic text-center px-1">{description}</span>}
-        <span>100%</span>
+        <span>{max}{unit}</span>
       </div>
     </div>
   )
 }
 
 // ─────────────────────────────────────────────────────
-//  Componente input numérico estándar
+//  Componente input numérico estándar (mantenido por compatibilidad si es necesario en el futuro)
 // ─────────────────────────────────────────────────────
 function NumberField({ label, value, onChange, placeholder = 'Sin límite', unit = '' }) {
   return (
@@ -115,19 +120,27 @@ function Toast({ toast }) {
 //  Panel principal de configuración
 // ─────────────────────────────────────────────────────
 export default function ConfigPanel({ rangos, onSave }) {
-  // Estado en valores "display":
-  //   suelo   → humPct  (% de humedad, 0 = seco, 100 = saturado)
-  //   luz_min → luzMinPct, luz_max → luzMaxPct (% de radiación)
-  //   temperatura y humedad ambiental → valores en sus unidades reales
-  const [humPct,      setHumPct]      = useState(22)   // umbral mínimo de humedad suelo
-  const [luzMinPct,   setLuzMinPct]   = useState(12)   // umbral mínimo de radiación
-  const [luzMaxPct,   setLuzMaxPct]   = useState(73)   // umbral máximo de radiación
+  const [humPct,      setHumPct]      = useState(22)   
+  const [luzMinPct,   setLuzMinPct]   = useState(12)   
+  const [luzMaxPct,   setLuzMaxPct]   = useState(73)   
   const [tempMin,     setTempMin]     = useState(18)
   const [tempMax,     setTempMax]     = useState(35)
   const [humAmbMin,   setHumAmbMin]   = useState(40)
   const [humAmbMax,   setHumAmbMax]   = useState(80)
+  
   const [saving,  setSaving]  = useState(false)
   const [toast,   setToast]   = useState(null)
+
+  // Límites visuales para los sliders
+  const TEMP_SLIDER_MIN = -10;
+  const TEMP_SLIDER_MAX = 60;
+  const HUM_SLIDER_MIN = 0;
+  const HUM_SLIDER_MAX = 100;
+
+  // Función de ayuda para calcular los % relativos de la zona aceptable
+  const getPctInRange = (minR, maxR, val) => {
+    return Math.max(0, Math.min(100, ((val - minR) / (maxR - minR)) * 100));
+  }
 
   // Sincronizar con rangos del backend al cargar
   useEffect(() => {
@@ -147,9 +160,15 @@ export default function ConfigPanel({ rangos, onSave }) {
     if (rangos.humedad_ambiental?.max != null) setHumAmbMax(rangos.humedad_ambiental.max)
   }, [rangos])
 
-  // Asegurar que luzMin nunca supere luzMax
-  const handleLuzMin = (v) => setLuzMinPct(Math.min(v, luzMaxPct - 1))
-  const handleLuzMax = (v) => setLuzMaxPct(Math.max(v, luzMinPct + 1))
+  // Asegurar que los mínimos nunca superen a los máximos
+  const handleLuzMin    = (v) => setLuzMinPct(Math.min(v, luzMaxPct - 1))
+  const handleLuzMax    = (v) => setLuzMaxPct(Math.max(v, luzMinPct + 1))
+  
+  const handleTempMin   = (v) => setTempMin(Math.min(v, tempMax - 1))
+  const handleTempMax   = (v) => setTempMax(Math.max(v, tempMin + 1))
+
+  const handleHumAmbMin = (v) => setHumAmbMin(Math.min(v, humAmbMax - 1))
+  const handleHumAmbMax = (v) => setHumAmbMax(Math.max(v, humAmbMin + 1))
 
   const handleSave = async () => {
     setSaving(true)
@@ -220,33 +239,112 @@ export default function ConfigPanel({ rangos, onSave }) {
           </p>
         </div>
 
-        {/* ── Temperatura (inputs numéricos) ─────────────── */}
+        {/* ── Temperatura (dos sliders) ─────────────── */}
         <div className="bg-slate-800/70 rounded-2xl p-4 border border-slate-700/60">
-          <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center gap-3 mb-4">
             <span className="text-2xl">🌡️</span>
             <div>
               <p className="text-sm font-semibold text-slate-200">Temperatura Ambiental</p>
               <p className="text-[10px] text-slate-500">Rango normal en grados Celsius (°C)</p>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <NumberField label="Mínimo" value={tempMin} onChange={setTempMin} unit="°C" />
-            <NumberField label="Máximo" value={tempMax} onChange={setTempMax} unit="°C" />
+          
+          <div className="space-y-5">
+            <SliderField
+              label="Temperatura mínima aceptable"
+              value={tempMin}
+              onChange={handleTempMin}
+              min={TEMP_SLIDER_MIN}
+              max={TEMP_SLIDER_MAX}
+              unit="°C"
+              description="← frío · calor →"
+            />
+            <SliderField
+              label="Temperatura máxima aceptable"
+              value={tempMax}
+              onChange={handleTempMax}
+              min={TEMP_SLIDER_MIN}
+              max={TEMP_SLIDER_MAX}
+              unit="°C"
+              description="← frío · calor →"
+            />
+          </div>
+
+          {/* Visualización del rango aceptable */}
+          <div className="mt-4 bg-slate-900/50 rounded-xl p-3">
+            <p className="text-[10px] text-slate-500 mb-2 font-semibold uppercase tracking-wider">Zona de operación normal</p>
+            <div className="relative w-full h-4 bg-slate-700 rounded-full overflow-hidden">
+              {/* Zona azul/roja izquierda */}
+              <div className="absolute left-0 top-0 h-full bg-blue-500/40 rounded-l-full"
+                   style={{ width: `${getPctInRange(TEMP_SLIDER_MIN, TEMP_SLIDER_MAX, tempMin)}%` }} />
+              {/* Zona verde (rango aceptable) */}
+              <div className="absolute top-0 h-full bg-emerald-500/50"
+                   style={{ 
+                     left: `${getPctInRange(TEMP_SLIDER_MIN, TEMP_SLIDER_MAX, tempMin)}%`, 
+                     width: `${getPctInRange(TEMP_SLIDER_MIN, TEMP_SLIDER_MAX, tempMax) - getPctInRange(TEMP_SLIDER_MIN, TEMP_SLIDER_MAX, tempMin)}%` 
+                   }} />
+              {/* Zona roja derecha */}
+              <div className="absolute right-0 top-0 h-full bg-red-500/40 rounded-r-full"
+                   style={{ width: `${100 - getPctInRange(TEMP_SLIDER_MIN, TEMP_SLIDER_MAX, tempMax)}%` }} />
+            </div>
+            <div className="flex justify-between text-[9px] mt-1.5">
+              <span className="text-blue-400">Frío {tempMin}°C</span>
+              <span className="text-emerald-400">✓ Zona normal</span>
+              <span className="text-red-400">{tempMax}°C Calor</span>
+            </div>
           </div>
         </div>
 
-        {/* ── Humedad Ambiental (inputs numéricos) ────────── */}
+        {/* ── Humedad Ambiental (dos sliders) ────────── */}
         <div className="bg-slate-800/70 rounded-2xl p-4 border border-slate-700/60">
-          <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center gap-3 mb-4">
             <span className="text-2xl">💧</span>
             <div>
               <p className="text-sm font-semibold text-slate-200">Humedad Ambiental</p>
               <p className="text-[10px] text-slate-500">Rango normal en porcentaje (%)</p>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <NumberField label="Mínimo" value={humAmbMin} onChange={setHumAmbMin} unit="%" />
-            <NumberField label="Máximo" value={humAmbMax} onChange={setHumAmbMax} unit="%" />
+          
+          <div className="space-y-5">
+            <SliderField
+              label="Humedad mínima aceptable"
+              value={humAmbMin}
+              onChange={handleHumAmbMin}
+              min={HUM_SLIDER_MIN}
+              max={HUM_SLIDER_MAX}
+              unit="%"
+              description="← seco · húmedo →"
+            />
+            <SliderField
+              label="Humedad máxima aceptable"
+              value={humAmbMax}
+              onChange={handleHumAmbMax}
+              min={HUM_SLIDER_MIN}
+              max={HUM_SLIDER_MAX}
+              unit="%"
+              description="← seco · húmedo →"
+            />
+          </div>
+
+          {/* Visualización del rango aceptable */}
+          <div className="mt-4 bg-slate-900/50 rounded-xl p-3">
+            <p className="text-[10px] text-slate-500 mb-2 font-semibold uppercase tracking-wider">Zona de operación normal</p>
+            <div className="relative w-full h-4 bg-slate-700 rounded-full overflow-hidden">
+              {/* Zona roja izquierda */}
+              <div className="absolute left-0 top-0 h-full bg-red-500/40 rounded-l-full"
+                   style={{ width: `${humAmbMin}%` }} />
+              {/* Zona verde (rango aceptable) */}
+              <div className="absolute top-0 h-full bg-emerald-500/50"
+                   style={{ left: `${humAmbMin}%`, width: `${humAmbMax - humAmbMin}%` }} />
+              {/* Zona azul derecha */}
+              <div className="absolute right-0 top-0 h-full bg-blue-500/40 rounded-r-full"
+                   style={{ width: `${100 - humAmbMax}%` }} />
+            </div>
+            <div className="flex justify-between text-[9px] mt-1.5">
+              <span className="text-red-400">Seco {humAmbMin}%</span>
+              <span className="text-emerald-400">✓ Zona normal</span>
+              <span className="text-blue-400">{humAmbMax}% Exceso</span>
+            </div>
           </div>
         </div>
 

@@ -103,8 +103,24 @@ function AlertaItem({ alerta, onDelete }) {
 }
 
 export default function AlertHistory({ alertas, onDelete }) {
+  const [clearingAll, setClearingAll] = useState(false) // <-- Estado agregado
+
   const criticas  = alertas.filter(a => a.severidad === 'CRITICAL')
   const warnings  = alertas.filter(a => a.severidad === 'WARNING')
+
+  // <-- Función agregada para manejar "Limpiar todo"
+  const handleClearAll = async () => {
+    setClearingAll(true)
+    try {
+      // Elimina todas las alertas concurrentemente
+      await Promise.all(alertas.map(a => eliminarAlerta(a.id)))
+      onDelete() // Recarga las alertas desde el componente padre
+    } catch (error) {
+      console.error("Error al limpiar todas las alertas:", error)
+    } finally {
+      setClearingAll(false)
+    }
+  }
 
   return (
     <div className="animate-fade-in">
