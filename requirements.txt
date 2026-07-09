@@ -1,0 +1,2 @@
+# Dependencias del backend
+-r backend/requirements.txt
