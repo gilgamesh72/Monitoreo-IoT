@@ -196,10 +196,10 @@ def validar_todos_sensores(datos: dict, db: Session) -> dict:
         "alertas_individuales": alertas_individuales,
         "datos": datos,
         "mensaje": (
-            "⚠️ Estrés Hídrico crítico detectado."
+            "Estrés Hídrico crítico detectado."
             if estres
             else f"{total_alertas} alerta(s) registrada(s)."
             if alertas_individuales
-            else "✅ Todos los sensores dentro de rango."
+            else "Todos los sensores dentro de rango."
         ),
     }

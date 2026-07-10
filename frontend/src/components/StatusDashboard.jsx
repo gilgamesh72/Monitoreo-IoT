@@ -26,7 +26,7 @@ function SkeletonCard() {
 function EstresHidricoBanner() {
   return (
     <div className="mb-4 rounded-2xl border border-red-500/60 bg-red-500/10 p-4 flex items-center gap-3 animate-fade-in">
-      <span className="text-3xl flex-shrink-0">🏜️</span>
+      <span className="text-3xl flex-shrink-0" aria-hidden="true"></span>
       <div>
         <p className="font-bold text-red-400 text-sm">¡ESTRÉS HÍDRICO ACTIVO!</p>
         <p className="text-xs text-slate-400 mt-0.5">
@@ -65,13 +65,13 @@ export default function StatusDashboard({ sensores, rangos, loading }) {
     sueloInfo.estado, tempInfo.estado, humAmbInfo.estado, luzInfo.estado, co2Info.estado,
   ])
 
-  // ✅ Bug fix: evaluar estrés hídrico con VALORES ACTUALES, no el historial
+  // Bug fix: evaluar estrés hídrico con VALORES ACTUALES, no el historial
   const estresActivo = isEstresHidrico(sensores, rangos)
 
   const ESTADO_CFG = {
-    ok:       { text: 'text-emerald-400', bg: 'bg-emerald-500/10', label: '✅ Planta Normal' },
-    warning:  { text: 'text-amber-400',   bg: 'bg-amber-500/10',   label: '⚠️ Revisión Necesaria' },
-    critical: { text: 'text-red-400',     bg: 'bg-red-500/10',     label: '🚨 Estado Crítico' },
+    ok:       { text: 'text-emerald-400', bg: 'bg-emerald-500/10', label: 'Planta Normal' },
+    warning:  { text: 'text-amber-400',   bg: 'bg-amber-500/10',   label: 'Revisión Necesaria' },
+    critical: { text: 'text-red-400',     bg: 'bg-red-500/10',     label: 'Estado Crítico' },
   }
   const cfg = ESTADO_CFG[estadoGlobal]
 
@@ -94,7 +94,7 @@ export default function StatusDashboard({ sensores, rangos, loading }) {
         {/* Humedad del Suelo — modo porcentaje (% de humedad) */}
         <SensorCard
           titulo="Humedad Suelo"
-          icono="🌱"
+          icono=""
           etiqueta={sueloInfo.etiqueta}
           estado={sueloInfo.estado}
           percent={sueloInfo.pct}
@@ -104,7 +104,7 @@ export default function StatusDashboard({ sensores, rangos, loading }) {
         {/* Temperatura — modo estándar */}
         <SensorCard
           titulo="Temperatura"
-          icono="🌡️"
+          icono=""
           valor={sensores.temperatura.toFixed(1)}
           unidad="°C"
           etiqueta={tempInfo.etiqueta}
@@ -118,7 +118,7 @@ export default function StatusDashboard({ sensores, rangos, loading }) {
         {/* Humedad Ambiental — modo estándar */}
         <SensorCard
           titulo="Humedad Amb."
-          icono="💧"
+          icono=""
           valor={sensores.humedad_ambiental.toFixed(1)}
           unidad="%"
           etiqueta={humAmbInfo.etiqueta}
@@ -132,7 +132,7 @@ export default function StatusDashboard({ sensores, rangos, loading }) {
         {/* Radiación Solar — modo porcentaje */}
         <SensorCard
           titulo="Radiación Solar"
-          icono="☀️"
+          icono=""
           etiqueta={luzInfo.etiqueta}
           estado={luzInfo.estado}
           percent={luzInfo.pct}
@@ -142,7 +142,7 @@ export default function StatusDashboard({ sensores, rangos, loading }) {
         {/* CO₂ — Calidad de Aire */}
         <SensorCard
           titulo="CO₂ Ambiente"
-          icono="💨"
+          icono=""
           valor={sensores.co2 != null ? Math.round(sensores.co2) : '--'}
           unidad="ppm"
           etiqueta={co2Info.etiqueta}
@@ -156,7 +156,7 @@ export default function StatusDashboard({ sensores, rangos, loading }) {
       </div>
 
       <p className="text-center text-xs text-slate-600 mt-4">
-        Actualización automática cada 5 segundos
+        Actualización automática
       </p>
     </div>
   )

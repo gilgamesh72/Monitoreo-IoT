@@ -40,81 +40,71 @@ REQUERIDOS = {"temperatura", "humedad_ambiental", "luz", "humedad_suelo", "co2"}
 # ─── Caché en memoria ────────────────────────────────────────────────
 _cache: dict = {}
 
-# ─── Plantilla de query Flux ─────────────────────────────────────────
-_FLUX_TEMPLATE = """
-from(bucket: "{bucket}")
-  |> range(start: {ventana})
-  |> filter(fn: (r) => r["_measurement"] == "monitoreo_invernadero")
-  |> filter(fn: (r) => r["_field"] == "calidad_aire_cruda"
-                    or r["_field"] == "humedad_ambiente"
-                    or r["_field"] == "humedad_suelo_cruda"
-                    or r["_field"] == "luz_cruda"
-                    or r["_field"] == "temperatura")
+VALOR_MAX_ADC = {
+    "humedad_suelo": 4095,
+    "luz": 1023
+}
+
+def aplicar_correcciones(nombre_local: str, valor_crudo: float) -> float:
+    """Aplica la inversión matemática de los sensores y los topes lógicos"""
+    valor = float(valor_crudo)
+    
+    if nombre_local in VALOR_MAX_ADC:
+        # Aquí invertimos: Mayor valor crudo (ej. 4095) = Menos humedad (0)
+        valor = VALOR_MAX_ADC[nombre_local] - valor
+        valor = max(0.0, valor) # Evitar errores de voltaje negativo
+        
+    if nombre_local == "co2":
+        # Asegurar que el CO2 siempre esté entre 10 y 1000 ppm
+        valor = max(10.0, min(1000.0, valor))
+        
+    return round(valor, 2)
+
+# Construimos la consulta automáticamente
+_campos_flux = ' or '.join([f'r["_field"] == "{c}"' for c in CAMPO_MAP.keys()])
+
+# ¡Filtro "_measurement" eliminado! Ahora busca en todo el bucket "invernadero"
+_FLUX_TEMPLATE = f"""
+from(bucket: "{{bucket}}")
+  |> range(start: {{ventana}})
+  |> filter(fn: (r) => {_campos_flux})
   |> last()
 """
 
-# Primero -2m (rápido ~1-2s), luego -24h como fallback (lento, solo si simulador parado)
-_VENTANAS = ["-2m", "-5m"]
-
+_VENTANAS = ["-2m", "-5m", "-15m"]
 
 def _query_ventana(ventana: str) -> dict:
-    """Ejecuta la query con la ventana indicada. Lanza excepción si falla."""
     flux = _FLUX_TEMPLATE.format(bucket=INFLUX_BUCKET, ventana=ventana)
     tablas = _query_api.query(flux)
-    resultado: dict[str, float] = {}
+    resultado = {}
     for tabla in tablas:
         for fila in tabla.records:
             nombre_local = CAMPO_MAP.get(fila.get_field())
             if nombre_local and fila.get_value() is not None:
-                resultado[nombre_local] = round(float(fila.get_value()), 2)
+                resultado[nombre_local] = aplicar_correcciones(nombre_local, fila.get_value())
     return resultado
 
-
 def obtener_ultimo_dato() -> dict:
-    """
-    Devuelve la lectura más reciente de InfluxDB.
-
-    Flujo:
-      1. Query rápida -2m  → si tiene los 5 campos, retorna y actualiza caché.
-      2. Query lenta  -24h → si el simulador lleva rato parado (datos > 2 min).
-      3. Caché              → si ambas queries fallan (error de red transitorio).
-      4. RuntimeError 503  → solo si nunca hubo dato exitoso (primera vez sin datos).
-    """
     global _cache
-
     for ventana in _VENTANAS:
         try:
             resultado = _query_ventana(ventana)
-            if REQUERIDOS.issubset(resultado.keys()):
-                _cache = resultado   # guardar dato fresco en caché
-                return resultado
-            # Si vino vacío (sin datos en esa ventana), prueba la siguiente
+            if resultado: 
+                # Actualiza SOLO los sensores que están enviando datos.
+                # Los desconectados conservarán su valor de la caché.
+                _cache.update(resultado)
+                return _cache
         except Exception as e:
-            print(f"[InfluxDB] Fallo query {ventana}: {e}. Probando siguiente ventana o caché...")
+            print(f"[InfluxDB] Fallo query {ventana}: {e}")
+            
+    # Si todo falla, devuelve los datos por defecto para que la web no se caiga
+    return _cache
 
-    # ── Fallback: caché ──────────────────────────────────────────────
-    if _cache:
-        print("[InfluxDB] Usando caché (ambas queries fallaron).")
-        return _cache
-
-    raise RuntimeError(
-        "Sin datos en InfluxDB y sin caché. "
-        "Inicia el simulador con: node simulador.js"
-    )
 def obtener_historial(ventana="-1h") -> list:
-    """
-    Obtiene el historial de datos agrupados por minuto para generar las gráficas.
-    """
-    # ⚠️ OJO: Usa el measurement actual que te esté funcionando (ej. "sensores_v3" o "lectura_sensores")
     flux = f"""
     from(bucket: "{INFLUX_BUCKET}")
       |> range(start: {ventana})
-      |> filter(fn: (r) => r["_measurement"] == "monitoreo_invernadero") 
-      |> filter(fn: (r) => r["_field"] == "calidad_aire_cruda"
-                        or r["_field"] == "humedad_ambiente"
-                        or r["_field"] == "humedad_suelo_cruda"
-                        or r["_field"] == "luz_cruda"
-                        or r["_field"] == "temperatura")
+      |> filter(fn: (r) => {_campos_flux})
       |> aggregateWindow(every: 1m, fn: mean, createEmpty: false)
       |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
     """
@@ -124,23 +114,15 @@ def obtener_historial(ventana="-1h") -> list:
         for tabla in tablas:
             for fila in tabla.records:
                 dt = fila.get_time()
-                # Formato de hora simple ej. "14:30"
                 hora_str = dt.astimezone().strftime("%H:%M") if dt else ""
-                
                 punto = {"hora": hora_str}
-                # Mapeamos a los nombres exactos que espera el frontend
-                if "temperatura" in fila.values and fila.values["temperatura"] is not None:
-                    punto["temperatura"] = round(fila.values["temperatura"], 2)
-                if "humedad" in fila.values and fila.values["humedad"] is not None:
-                    punto["humedad_ambiental"] = round(fila.values["humedad"], 2)
-                if "humedad_suelo" in fila.values and fila.values["humedad_suelo"] is not None:
-                    punto["humedad_suelo"] = round(fila.values["humedad_suelo"], 2)
-                if "luz" in fila.values and fila.values["luz"] is not None:
-                    punto["luz"] = round(fila.values["luz"], 2)
-                if "co2_ppm" in fila.values and fila.values["co2_ppm"] is not None:
-                    punto["co2"] = round(fila.values["co2_ppm"], 2)
                 
-                if len(punto) > 1: # Si tiene datos además de la hora
+                for campo_db, nombre_local in CAMPO_MAP.items():
+                    if campo_db in fila.values and fila.values[campo_db] is not None:
+                        val_crudo = fila.values[campo_db]
+                        punto[nombre_local] = aplicar_correcciones(nombre_local, val_crudo)
+                        
+                if len(punto) > 1:
                     historial.append(punto)
         return historial
     except Exception as e:

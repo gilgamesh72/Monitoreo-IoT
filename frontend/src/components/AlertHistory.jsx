@@ -3,15 +3,15 @@ import { eliminarAlerta } from '../services/api'
 
 // ── Mapeo de tipo → etiqueta visual ───────────────────────────────────
 const TIPO_LABELS = {
-  ESTRES_HIDRICO:           { emoji: '🏜️', label: 'Estrés Hídrico' },
-  TEMPERATURA_ALTO:         { emoji: '🌡️', label: 'Temperatura Alta' },
-  TEMPERATURA_BAJO:         { emoji: '❄️',  label: 'Temperatura Baja' },
-  HUMEDAD_SUELO_ALTO:       { emoji: '🌵', label: 'Suelo Muy Seco' },
-  HUMEDAD_SUELO_BAJO:       { emoji: '💦', label: 'Suelo Saturado' },
-  HUMEDAD_AMBIENTAL_ALTO:   { emoji: '🌊', label: 'Humedad Alta' },
-  HUMEDAD_AMBIENTAL_BAJO:   { emoji: '🌫️', label: 'Humedad Baja' },
-  LUZ_ALTO:                 { emoji: '☀️', label: 'Radiación Alta' },
-  LUZ_BAJO:                 { emoji: '🌑', label: 'Luz Insuficiente' },
+  ESTRES_HIDRICO:           { emoji: '', label: 'Estrés Hídrico' },
+  TEMPERATURA_ALTO:         { emoji: '', label: 'Temperatura Alta' },
+  TEMPERATURA_BAJO:         { emoji: '', label: 'Temperatura Baja' },
+  HUMEDAD_SUELO_ALTO:       { emoji: '', label: 'Suelo Muy Seco' },
+  HUMEDAD_SUELO_BAJO:       { emoji: '', label: 'Suelo Saturado' },
+  HUMEDAD_AMBIENTAL_ALTO:   { emoji: '', label: 'Humedad Alta' },
+  HUMEDAD_AMBIENTAL_BAJO:   { emoji: '', label: 'Humedad Baja' },
+  LUZ_ALTO:                 { emoji: '', label: 'Radiación Alta' },
+  LUZ_BAJO:                 { emoji: '', label: 'Luz Insuficiente' },
 }
 
 const SEVERIDAD = {
@@ -43,7 +43,7 @@ function formatFecha(isoString) {
 function AlertaItem({ alerta, onDelete }) {
   const [deleting, setDeleting] = useState(false)
   const cfg  = SEVERIDAD[alerta.severidad] ?? SEVERIDAD.WARNING
-  const tipo = TIPO_LABELS[alerta.tipo_alerta] ?? { emoji: '⚠️', label: alerta.tipo_alerta }
+  const tipo = TIPO_LABELS[alerta.tipo_alerta] ?? { emoji: '', label: alerta.tipo_alerta }
 
   const handleDelete = async () => {
     setDeleting(true)
@@ -77,7 +77,7 @@ function AlertaItem({ alerta, onDelete }) {
             {alerta.descripcion}
           </p>
           <p className="text-[10px] text-slate-600">
-            🕐 {formatFecha(alerta.creado_en)}
+            {formatFecha(alerta.creado_en)}
           </p>
         </div>
 
@@ -157,7 +157,7 @@ export default function AlertHistory({ alertas, onDelete }) {
       {/* Estado vacío */}
       {alertas.length === 0 ? (
         <div className="text-center py-16 animate-fade-in">
-          <p className="text-5xl mb-3">✅</p>
+          <p className="text-5xl mb-3"></p>
           <p className="font-semibold text-slate-300 text-base">Sin alertas registradas</p>
           <p className="text-sm text-slate-500 mt-1">
             Todos los sensores operan dentro de los rangos configurados.

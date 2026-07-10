@@ -21,8 +21,8 @@ export function getSueloInfo(rawValor, rangos) {
   if (rawValor > max)          return { etiqueta: 'Suelo Críticamente Seco', estado: 'critical', pct: humedadPct }
   if (rawValor > max * 0.88)  return { etiqueta: 'Suelo Seco',               estado: 'warning',  pct: humedadPct }
   if (rawValor > 2000)         return { etiqueta: 'Humedad Moderada',         estado: 'ok',       pct: humedadPct }
-  if (rawValor > 800)          return { etiqueta: 'Humedad Normal 🌿',        estado: 'ok',       pct: humedadPct }
-  return                              { etiqueta: 'Suelo Saturado 💦',         estado: 'ok',       pct: humedadPct }
+  if (rawValor > 800)          return { etiqueta: 'Humedad Normal',        estado: 'ok',       pct: humedadPct }
+  return                              { etiqueta: 'Suelo Saturado',         estado: 'ok',       pct: humedadPct }
 }
 
 // ─────────────────────────────────────────────────────
@@ -32,11 +32,11 @@ export function getTemperaturaInfo(valor, rangos) {
   const min = rangos?.temperatura?.min ?? 18
   const max = rangos?.temperatura?.max ?? 35
 
-  if (valor > max + 5)  return { etiqueta: 'Temperatura Crítica 🔴',  estado: 'critical' }
-  if (valor > max)      return { etiqueta: 'Temperatura Elevada ♨️',  estado: 'warning'  }
-  if (valor < min - 3)  return { etiqueta: 'Temperatura Muy Baja 🧊', estado: 'warning'  }
-  if (valor < min)      return { etiqueta: 'Temperatura Baja ❄️',     estado: 'warning'  }
-  return                       { etiqueta: 'Temperatura Normal ✅',   estado: 'ok'       }
+  if (valor > max + 5)  return { etiqueta: 'Temperatura Crítica',  estado: 'critical' }
+  if (valor > max)      return { etiqueta: 'Temperatura Elevada',  estado: 'warning'  }
+  if (valor < min - 3)  return { etiqueta: 'Temperatura Muy Baja', estado: 'warning'  }
+  if (valor < min)      return { etiqueta: 'Temperatura Baja',     estado: 'warning'  }
+  return                       { etiqueta: 'Temperatura Normal',   estado: 'ok'       }
 }
 
 // ─────────────────────────────────────────────────────
@@ -46,11 +46,11 @@ export function getHumedadAmbInfo(valor, rangos) {
   const min = rangos?.humedad_ambiental?.min ?? 40
   const max = rangos?.humedad_ambiental?.max ?? 80
 
-  if (valor > max + 10)  return { etiqueta: 'Humedad Excesiva 🌊',       estado: 'warning' }
-  if (valor > max)       return { etiqueta: 'Humedad Alta 💧',            estado: 'warning' }
-  if (valor < min - 10)  return { etiqueta: 'Humedad Muy Baja 🌵',       estado: 'warning' }
+  if (valor > max + 10)  return { etiqueta: 'Humedad Excesiva',       estado: 'warning' }
+  if (valor > max)       return { etiqueta: 'Humedad Alta',            estado: 'warning' }
+  if (valor < min - 10)  return { etiqueta: 'Humedad Muy Baja',       estado: 'warning' }
   if (valor < min)       return { etiqueta: 'Humedad Baja',               estado: 'warning' }
-  return                        { etiqueta: 'Humedad Ambiental Óptima ✅', estado: 'ok'     }
+  return                        { etiqueta: 'Humedad Ambiental Óptima', estado: 'ok'     }
 }
 
 // ─────────────────────────────────────────────────────
@@ -63,11 +63,11 @@ export function getLuzInfo(rawValor, rangos) {
   // % radiación: 0% = oscuridad, 100% = radiación máxima
   const luzPct = Math.round((rawValor / 4095) * 100)
 
-  if (rawValor > max + 500)  return { etiqueta: 'Radiación Extrema ☀️🔴',       estado: 'critical', pct: luzPct }
-  if (rawValor > max)        return { etiqueta: 'Radiación Solar Alta ☀️',       estado: 'warning',  pct: luzPct }
-  if (rawValor < min / 2)    return { etiqueta: 'Sin Luz — Noche 🌙',            estado: 'ok',       pct: luzPct }
-  if (rawValor < min)        return { etiqueta: 'Luz Insuficiente 🌥️',           estado: 'warning',  pct: luzPct }
-  return                            { etiqueta: 'Nivel de Luz Normal ✅',         estado: 'ok',       pct: luzPct }
+  if (rawValor > max + 500)  return { etiqueta: 'Radiación Extrema',       estado: 'critical', pct: luzPct }
+  if (rawValor > max)        return { etiqueta: 'Radiación Solar Alta',   estado: 'warning',  pct: luzPct }
+  if (rawValor < min / 2)    return { etiqueta: 'Sin Luz — Noche',        estado: 'ok',       pct: luzPct }
+  if (rawValor < min)        return { etiqueta: 'Luz Insuficiente',       estado: 'warning',  pct: luzPct }
+  return                            { etiqueta: 'Nivel de Luz Normal',         estado: 'ok',       pct: luzPct }
 }
 
 // ─────────────────────────────────────────────────────
@@ -77,12 +77,12 @@ export function getLuzInfo(rawValor, rangos) {
 export function getCO2Info(valor, rangos) {
   const max = rangos?.co2?.max ?? 1000
 
-  if (valor > 2000)         return { etiqueta: 'CO₂ Crítico ☠️',         estado: 'critical' }
-  if (valor > max + 500)    return { etiqueta: 'CO₂ Muy Elevado 😰',      estado: 'critical' }
-  if (valor > max)          return { etiqueta: 'CO₂ Elevado ⚠️',          estado: 'warning'  }
-  if (valor > max * 0.85)   return { etiqueta: 'CO₂ Moderado 🌬️',        estado: 'warning'  }
-  if (valor < 300)          return { etiqueta: 'CO₂ Muy Bajo 🌿',         estado: 'ok'       }
-  return                           { etiqueta: 'Calidad de Aire Óptima ✅', estado: 'ok'     }
+  if (valor > 2000)         return { etiqueta: 'CO₂ Crítico',         estado: 'critical' }
+  if (valor > max + 500)    return { etiqueta: 'CO₂ Muy Elevado',      estado: 'critical' }
+  if (valor > max)          return { etiqueta: 'CO₂ Elevado',          estado: 'warning'  }
+  if (valor > max * 0.85)   return { etiqueta: 'CO₂ Moderado',        estado: 'warning'  }
+  if (valor < 300)          return { etiqueta: 'CO₂ Muy Bajo',         estado: 'ok'       }
+  return                           { etiqueta: 'Calidad de Aire Óptima', estado: 'ok'     }
 }
 
 // ─────────────────────────────────────────────────────

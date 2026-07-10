@@ -111,7 +111,7 @@ function Toast({ toast }) {
       ok ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
          : 'bg-red-500/10 border-red-500/30 text-red-400'
     }`}>
-      {ok ? '✅' : '❌'} {toast.msg}
+      {ok ? 'OK' : 'ERROR'} {toast.msg}
     </div>
   )
 }
@@ -227,7 +227,7 @@ export default function ConfigPanel({ rangos, onSave }) {
         {/* ── Humedad del Suelo (slider) ──────────────────── */}
         <div className="bg-slate-800/70 rounded-2xl p-4 border border-slate-700/60">
           <div className="flex items-center gap-3 mb-4">
-            <span className="text-2xl">🌱</span>
+            <span className="text-2xl" aria-hidden="true"></span>
             <div>
               <p className="text-sm font-semibold text-slate-200">Humedad del Suelo</p>
               <p className="text-[10px] text-slate-500">Alerta si la humedad cae por debajo del umbral</p>
@@ -238,18 +238,16 @@ export default function ConfigPanel({ rangos, onSave }) {
             label="Umbral mínimo de humedad"
             value={humPct}
             onChange={setHumPct}
-            description="← más húmedo · más seco →"
+            description="← más seco · más húmedo →"
           />
 
-          <p className="text-[11px] text-amber-400/80 mt-3 bg-amber-500/5 border border-amber-500/20 rounded-lg px-2.5 py-1.5">
-            💡 Si la humedad baja de <strong>{humPct}%</strong>, se genera una alerta de suelo seco.
-          </p>
+ 
         </div>
 
         {/* ── Temperatura (dos sliders) ─────────────── */}
         <div className="bg-slate-800/70 rounded-2xl p-4 border border-slate-700/60">
           <div className="flex items-center gap-3 mb-4">
-            <span className="text-2xl">🌡️</span>
+            <span className="text-2xl" aria-hidden="true"></span>
             <div>
               <p className="text-sm font-semibold text-slate-200">Temperatura Ambiental</p>
               <p className="text-[10px] text-slate-500">Rango normal en grados Celsius (°C)</p>
@@ -305,7 +303,7 @@ export default function ConfigPanel({ rangos, onSave }) {
         {/* ── Humedad Ambiental (dos sliders) ────────── */}
         <div className="bg-slate-800/70 rounded-2xl p-4 border border-slate-700/60">
           <div className="flex items-center gap-3 mb-4">
-            <span className="text-2xl">💧</span>
+            <span className="text-2xl" aria-hidden="true"></span>
             <div>
               <p className="text-sm font-semibold text-slate-200">Humedad Ambiental</p>
               <p className="text-[10px] text-slate-500">Rango normal en porcentaje (%)</p>
@@ -358,7 +356,7 @@ export default function ConfigPanel({ rangos, onSave }) {
         {/* ── Radiación Solar (dos sliders) ──────────────── */}
         <div className="bg-slate-800/70 rounded-2xl p-4 border border-slate-700/60">
           <div className="flex items-center gap-3 mb-4">
-            <span className="text-2xl">☀️</span>
+            <span className="text-2xl" aria-hidden="true"></span>
             <div>
               <p className="text-sm font-semibold text-slate-200">Radiación Solar</p>
               <p className="text-[10px] text-slate-500">Rango normal de intensidad luminosa</p>
@@ -401,15 +399,13 @@ export default function ConfigPanel({ rangos, onSave }) {
             </div>
           </div>
 
-          <p className="text-[11px] text-amber-400/80 mt-3 bg-amber-500/5 border border-amber-500/20 rounded-lg px-2.5 py-1.5">
-            💡 Alerta si la radiación es menor de <strong>{luzMinPct}%</strong> o mayor de <strong>{luzMaxPct}%</strong>.
-          </p>
+ 
         </div>
 
         {/* ── CO₂ / Calidad de Aire (slider) ────────────────── */}
         <div className="bg-slate-800/70 rounded-2xl p-4 border border-slate-700/60">
           <div className="flex items-center gap-3 mb-4">
-            <span className="text-2xl">💨</span>
+            <span className="text-2xl" aria-hidden="true"></span>
             <div>
               <p className="text-sm font-semibold text-slate-200">Calidad de Aire — CO₂</p>
               <p className="text-[10px] text-slate-500">Umbral máximo permitido en ppm (partes por millón)</p>
@@ -420,8 +416,8 @@ export default function ConfigPanel({ rangos, onSave }) {
             label="Máximo de CO₂ aceptable"
             value={co2Max}
             onChange={setCo2Max}
-            min={400}
-            max={5000}
+            min={10}       // ← Límite físico real del sensor
+            max={1000}     // ← Límite físico real del sensor
             unit=" ppm"
             description="← aire limpio · contaminado →"
           />
@@ -432,10 +428,10 @@ export default function ConfigPanel({ rangos, onSave }) {
             <div className="relative w-full h-4 bg-slate-700 rounded-full overflow-hidden">
               {/* Zona verde (zona segura) */}
               <div className="absolute left-0 top-0 h-full bg-emerald-500/50 rounded-l-full"
-                   style={{ width: `${Math.min(100, ((co2Max - 400) / (5000 - 400)) * 100)}%` }} />
+                   style={{ width: `${Math.min(100, ((co2Max - 10) / (1000 - 10)) * 100)}%` }} />
               {/* Zona roja (exceso de CO₂) */}
               <div className="absolute right-0 top-0 h-full bg-red-500/40 rounded-r-full"
-                   style={{ width: `${Math.max(0, 100 - ((co2Max - 400) / (5000 - 400)) * 100)}%` }} />
+                   style={{ width: `${Math.max(0, 100 - ((co2Max - 10) / (1000 - 10)) * 100)}%` }} />
             </div>
             <div className="flex justify-between text-[9px] mt-1.5">
               <span className="text-emerald-400">✓ Seguro &lt;{co2Max} ppm</span>
@@ -444,9 +440,7 @@ export default function ConfigPanel({ rangos, onSave }) {
             </div>
           </div>
 
-          <p className="text-[11px] text-amber-400/80 mt-3 bg-amber-500/5 border border-amber-500/20 rounded-lg px-2.5 py-1.5">
-            💡 Se genera alerta cuando el CO₂ supera <strong>{co2Max} ppm</strong>. Valores &gt;2000 ppm activan alerta crítica.
-          </p>
+ 
         </div>
 
       </div>
@@ -469,7 +463,7 @@ export default function ConfigPanel({ rangos, onSave }) {
             <span className="w-4 h-4 border-2 border-slate-500 border-t-slate-900 rounded-full animate-spin" />
             Guardando…
           </span>
-        ) : '💾 Guardar Configuración'}
+        ) : 'Guardar Configuración'}
       </button>
 
       <p className="text-center text-[11px] text-slate-600 mt-3">

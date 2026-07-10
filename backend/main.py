@@ -67,7 +67,7 @@ async def lifespan(app: FastAPI):
 # ─────────────────────────────────────────────
 
 app = FastAPI(
-    title="🏭 Monitor IoT — Planta Industrial",
+    title="Monitor IoT — Planta Industrial",
     description="API REST para monitoreo de sensores IoT con detección de Estrés Hídrico.",
     version="1.0.0",
     lifespan=lifespan,
@@ -250,5 +250,5 @@ def root():
         "sistema": "Monitor IoT — Planta Industrial",
         "version": "1.0.0",
         "docs": "/docs",
-        "estado": "operativo ✅",
+        "estado": "operativo",
     }

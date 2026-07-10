@@ -6,10 +6,10 @@ import AlertHistory from './components/AlertHistory'
 import Reportes from './components/Reportes'
 // ── Definición de tabs ─────────────────────────────────────────────────
 const TABS = [
-  { id: 'dashboard', label: 'Estado',   icon: '📊' },
-  { id: 'config',    label: 'Config',   icon: '⚙️' },
-  { id: 'alertas',   label: 'Alertas',  icon: '🔔' },
-{ id: 'reportes',  label: 'Reportes', icon: '📈' },
+  { id: 'dashboard', label: 'Estado',   icon: '' },
+  { id: 'config',    label: 'Config',   icon: '' },
+  { id: 'alertas',   label: 'Alertas',  icon: '' },
+  { id: 'reportes',  label: 'Reportes', icon: '' },
 ]
 
 // ── Header ─────────────────────────────────────────────────────────────
@@ -20,21 +20,16 @@ function Header({ lastUpdate, error, onRefresh, refreshing }) {
       border-b border-slate-800 px-4 py-3
     ">
       <div className="flex items-center justify-between max-w-xl mx-auto">
-        {/* Logo + Título */}
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/30 flex-shrink-0">
-            <span className="text-lg">🏭</span>
-          </div>
-          <div>
-            <h1 className="text-sm font-bold text-white leading-tight">Monitor IoT Industrial</h1>
-            {lastUpdate ? (
-              <p className="text-[10px] text-slate-500">
-                {lastUpdate.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-              </p>
-            ) : (
-              <p className="text-[10px] text-slate-600">Conectando…</p>
-            )}
-          </div>
+        {/* Título */}
+        <div>
+          <h1 className="text-sm font-bold text-white leading-tight">Monitor IoT Industrial</h1>
+          {lastUpdate ? (
+            <p className="text-[10px] text-slate-500">
+              {lastUpdate.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </p>
+          ) : (
+            <p className="text-[10px] text-slate-600">Conectando…</p>
+          )}
         </div>
 
         {/* Estado de conexión + botón refresh */}
@@ -50,7 +45,7 @@ function Header({ lastUpdate, error, onRefresh, refreshing }) {
             "
             title="Refrescar ahora"
           >
-            <span className={`text-sm ${refreshing ? 'animate-spin' : ''}`}>🔄</span>
+            <span className={`text-sm ${refreshing ? 'animate-spin' : ''}`} aria-hidden="true"></span>
           </button>
 
           <div className={`
@@ -59,7 +54,6 @@ function Header({ lastUpdate, error, onRefresh, refreshing }) {
               ? 'bg-red-500/15 text-red-400 border border-red-500/25'
               : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25'}
           `}>
-            <span className={`w-1.5 h-1.5 rounded-full ${error ? 'bg-red-400' : 'bg-emerald-400 animate-pulse'}`} />
             {error ? 'Sin señal' : 'En vivo'}
           </div>
         </div>
@@ -84,25 +78,21 @@ function BottomNav({ activeTab, setActiveTab, alertCount }) {
               key={tab.id}
               id={`tab-${tab.id}`}
               onClick={() => setActiveTab(tab.id)}
-              className={`
-                flex-1 flex flex-col items-center py-3 gap-0.5 relative
-                transition-colors duration-150
-                ${isActive ? 'text-cyan-400' : 'text-slate-600 hover:text-slate-400'}
-              `}
+              className={`flex-1 flex flex-col items-center py-4 gap-1 relative transition-colors duration-150 ${isActive ? 'text-cyan-400' : 'text-slate-600 hover:text-slate-400'}`}
             >
               {/* Badge de alertas */}
               {tab.id === 'alertas' && alertCount > 0 && (
                 <span className="
-                  absolute top-2 right-[calc(50%-16px)] translate-x-3
-                  min-w-[16px] h-4 bg-red-500 rounded-full
-                  text-white text-[9px] font-bold flex items-center justify-center px-1
+                  absolute top-3 right-[calc(50%-16px)] translate-x-3
+                  min-w-[18px] h-5 bg-red-500 rounded-full
+                  text-white text-[10px] font-bold flex items-center justify-center px-1
                 ">
                   {alertCount > 99 ? '99+' : alertCount}
                 </span>
               )}
 
-              <span className="text-xl leading-none">{tab.icon}</span>
-              <span className="text-[9px] font-semibold uppercase tracking-wider">{tab.label}</span>
+              <span className="text-2xl leading-none">{tab.icon}</span>
+              <span className="text-sm font-semibold uppercase tracking-wider">{tab.label}</span>
 
               {/* Línea activa */}
               {isActive && (
@@ -120,8 +110,8 @@ function BottomNav({ activeTab, setActiveTab, alertCount }) {
 function ErrorBanner({ error }) {
   if (!error) return null
   return (
-    <div className="mx-0 mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-2xl text-red-400 text-xs flex items-start gap-2 animate-fade-in">
-      <span className="text-base flex-shrink-0">⚠️</span>
+      <div className="mx-0 mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-2xl text-red-400 text-xs flex items-start gap-2 animate-fade-in">
+      <span className="text-base flex-shrink-0">!</span>
       <span>{error} Asegúrate de que el backend corra en <code className="text-amber-400">localhost:8000</code>.</span>
     </div>
   )

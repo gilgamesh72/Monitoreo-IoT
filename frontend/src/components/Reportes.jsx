@@ -70,7 +70,7 @@ export default function Reportes({ rangos }) {
 
       {/* Gráfica Binaria de Estrés Hídrico */}
       <ChartCard 
-        titulo="⏳ Línea de Tiempo: Estrés Hídrico (1 = Activo, 0 = Normal)" 
+        titulo="Línea de Tiempo: Estrés Hídrico (1 = Activo, 0 = Normal)" 
         color="#ef4444" 
         data={data} 
         dataKey="estres_estado" 
@@ -78,11 +78,11 @@ export default function Reportes({ rangos }) {
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
-        <ChartCard titulo="🌡️ Temperatura" color="#f59e0b" data={data} dataKey="temperatura" yUnit="°C" />
-        <ChartCard titulo="💧 Humedad Ambiental" color="#3b82f6" data={data} dataKey="humedad_ambiental" yUnit="%" />
-        <ChartCard titulo="🌱 Humedad del Suelo" color="#10b981" data={data} dataKey="humedad_suelo" yUnit="hum." />
-        <ChartCard titulo="☀️ Radiación Solar" color="#fbbf24" data={data} dataKey="luz" yUnit="lux" />
-        <ChartCard titulo="💨 Niveles de CO₂" color="#a855f7" data={data} dataKey="co2" yUnit="ppm" />
+        <ChartCard titulo="Temperatura" color="#f59e0b" data={data} dataKey="temperatura" yUnit="°C" />
+        <ChartCard titulo="Humedad Ambiental" color="#3b82f6" data={data} dataKey="humedad_ambiental" yUnit="%" />
+        <ChartCard titulo="Humedad del Suelo" color="#10b981" data={data} dataKey="humedad_suelo" yUnit="hum." />
+        <ChartCard titulo="Radiación Solar" color="#fbbf24" data={data} dataKey="luz" yUnit="lux" />
+        <ChartCard titulo="Niveles de CO₂" color="#a855f7" data={data} dataKey="co2" yUnit="ppm" />
       </div>
     </div>
   )
