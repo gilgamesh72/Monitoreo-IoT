@@ -17,10 +17,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ─── Credenciales (obtenidas desde variables de entorno) ─────────────
-INFLUX_URL    = os.getenv("INFLUX_URL", "https://us-east-1-1.aws.cloud2.influxdata.com")
-INFLUX_TOKEN  = os.getenv("INFLUX_TOKEN", "1uAsc-b5DXuECfzVATJPifJgB4LXxqYhC73IXKSfZovPDbJ47V35I_irJLXrsVbdc7st9tsC0l1-9yNVfnafCQ==")
-INFLUX_ORG    = os.getenv("INFLUX_ORG", "diana.postigo@unmsm.edu.pe")
-INFLUX_BUCKET = os.getenv("INFLUX_BUCKET", "sensores_proyecto")
+INFLUX_URL    = os.getenv("INFLUX_URL")
+INFLUX_TOKEN  = os.getenv("INFLUX_TOKEN")
+INFLUX_ORG    = os.getenv("INFLUX_ORG")
+INFLUX_BUCKET = os.getenv("INFLUX_BUCKET")
 
 # ─── Cliente reutilizable ────────────────────────────────────────────
 _client    = InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN, org=INFLUX_ORG)
@@ -28,10 +28,10 @@ _query_api = _client.query_api()
 
 # ─── Mapeo InfluxDB → nombres internos ──────────────────────────────
 CAMPO_MAP = {
-    "co2_ppm":       "co2",
-    "humedad":       "humedad_ambiental",
-    "humedad_suelo": "humedad_suelo",
-    "luz":           "luz",
+    "calidad_aire_cruda":       "co2",
+    "humedad_ambiente":       "humedad_ambiental",
+    "humedad_suelo_cruda": "humedad_suelo",
+    "luz_cruda":           "luz",
     "temperatura":   "temperatura",
 }
 
@@ -44,11 +44,11 @@ _cache: dict = {}
 _FLUX_TEMPLATE = """
 from(bucket: "{bucket}")
   |> range(start: {ventana})
-  |> filter(fn: (r) => r["_measurement"] == "sensores_v3")
-  |> filter(fn: (r) => r["_field"] == "co2_ppm"
-                    or r["_field"] == "humedad"
-                    or r["_field"] == "humedad_suelo"
-                    or r["_field"] == "luz"
+  |> filter(fn: (r) => r["_measurement"] == "monitoreo_invernadero")
+  |> filter(fn: (r) => r["_field"] == "calidad_aire_cruda"
+                    or r["_field"] == "humedad_ambiente"
+                    or r["_field"] == "humedad_suelo_cruda"
+                    or r["_field"] == "luz_cruda"
                     or r["_field"] == "temperatura")
   |> last()
 """
@@ -101,3 +101,48 @@ def obtener_ultimo_dato() -> dict:
         "Sin datos en InfluxDB y sin caché. "
         "Inicia el simulador con: node simulador.js"
     )
+def obtener_historial(ventana="-1h") -> list:
+    """
+    Obtiene el historial de datos agrupados por minuto para generar las gráficas.
+    """
+    # ⚠️ OJO: Usa el measurement actual que te esté funcionando (ej. "sensores_v3" o "lectura_sensores")
+    flux = f"""
+    from(bucket: "{INFLUX_BUCKET}")
+      |> range(start: {ventana})
+      |> filter(fn: (r) => r["_measurement"] == "monitoreo_invernadero") 
+      |> filter(fn: (r) => r["_field"] == "calidad_aire_cruda"
+                        or r["_field"] == "humedad_ambiente"
+                        or r["_field"] == "humedad_suelo_cruda"
+                        or r["_field"] == "luz_cruda"
+                        or r["_field"] == "temperatura")
+      |> aggregateWindow(every: 1m, fn: mean, createEmpty: false)
+      |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+    """
+    try:
+        tablas = _query_api.query(flux)
+        historial = []
+        for tabla in tablas:
+            for fila in tabla.records:
+                dt = fila.get_time()
+                # Formato de hora simple ej. "14:30"
+                hora_str = dt.astimezone().strftime("%H:%M") if dt else ""
+                
+                punto = {"hora": hora_str}
+                # Mapeamos a los nombres exactos que espera el frontend
+                if "temperatura" in fila.values and fila.values["temperatura"] is not None:
+                    punto["temperatura"] = round(fila.values["temperatura"], 2)
+                if "humedad" in fila.values and fila.values["humedad"] is not None:
+                    punto["humedad_ambiental"] = round(fila.values["humedad"], 2)
+                if "humedad_suelo" in fila.values and fila.values["humedad_suelo"] is not None:
+                    punto["humedad_suelo"] = round(fila.values["humedad_suelo"], 2)
+                if "luz" in fila.values and fila.values["luz"] is not None:
+                    punto["luz"] = round(fila.values["luz"], 2)
+                if "co2_ppm" in fila.values and fila.values["co2_ppm"] is not None:
+                    punto["co2"] = round(fila.values["co2_ppm"], 2)
+                
+                if len(punto) > 1: # Si tiene datos además de la hora
+                    historial.append(punto)
+        return historial
+    except Exception as e:
+        print(f"Error consultando historial: {e}")
+        return []

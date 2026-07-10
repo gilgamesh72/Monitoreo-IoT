@@ -23,7 +23,7 @@ from sqlalchemy.orm import Session
 import models
 import schemas
 from database import engine, SessionLocal, get_db
-from services.influxdb_service import obtener_ultimo_dato
+from services.influxdb_service import obtener_ultimo_dato, obtener_historial
 from services.validation import validar_todos_sensores
 
 
@@ -121,7 +121,16 @@ def obtener_sensores_actual():
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=f"Error al conectar con InfluxDB: {e}",
         )
-
+@app.get(
+    "/api/sensores/historial",
+    tags=["Sensores"],
+    summary="Obtiene el historial de datos de la última hora"
+)
+def obtener_sensores_historial():
+    try:
+        return obtener_historial("-1h")
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=str(e))
 
 @app.post(
     "/api/sensores/validar",

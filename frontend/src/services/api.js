@@ -9,7 +9,8 @@ const API = axios.create({
 // ── Sensores ──────────────────────────────────────
 /** Obtiene los valores actuales de los sensores (simulados). */
 export const getSensores = () => API.get('/api/sensores/actual')
-
+/** Obtiene el historial de la última hora */
+export const getHistorial = () => API.get('/api/sensores/historial')
 /** Envía datos al backend para validar y generar alertas. */
 export const validarSensores = (datos) => API.post('/api/sensores/validar', datos)
 

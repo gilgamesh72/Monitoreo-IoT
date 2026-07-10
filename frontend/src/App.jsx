@@ -3,14 +3,13 @@ import { useSensorData } from './hooks/useSensorData'
 import StatusDashboard from './components/StatusDashboard'
 import ConfigPanel from './components/ConfigPanel'
 import AlertHistory from './components/AlertHistory'
-import GrafanaPlaceholder from './components/GrafanaPlaceholder'
-
+import Reportes from './components/Reportes'
 // ── Definición de tabs ─────────────────────────────────────────────────
 const TABS = [
   { id: 'dashboard', label: 'Estado',   icon: '📊' },
   { id: 'config',    label: 'Config',   icon: '⚙️' },
   { id: 'alertas',   label: 'Alertas',  icon: '🔔' },
-  { id: 'grafana',   label: 'Grafana',  icon: '📈' },
+{ id: 'reportes',  label: 'Reportes', icon: '📈' },
 ]
 
 // ── Header ─────────────────────────────────────────────────────────────
@@ -184,8 +183,8 @@ export default function App() {
             onDelete={refetchAlertas}
           />
         )}
-        {activeTab === 'grafana' && (
-          <GrafanaPlaceholder />
+        {activeTab === 'reportes' && (
+          <Reportes rangos={rangos} />
         )}
       </main>
 
