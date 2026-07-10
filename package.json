@@ -1,0 +1,26 @@
+{
+  "dependencies": {
+    "@influxdata/influxdb-client": "^1.35.0",
+    "dotenv": "^16.1.4"
+  },
+  "name": "proyecto",
+  "version": "1.0.0",
+  "description": "Aplicacion con arquitectura separada en backend (Python/FastAPI) y frontend (React + Vite) para visualizacion y monitoreo de sensores.",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gilgamesh72/Monitoreo-IoT.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/gilgamesh72/Monitoreo-IoT/issues"
+  },
+  "homepage": "https://github.com/gilgamesh72/Monitoreo-IoT#readme"
+}

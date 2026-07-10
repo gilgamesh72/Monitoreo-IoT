@@ -1,10 +1,10 @@
 """
 Monitor IoT para Planta Industrial — Backend API
 ================================================
-FastAPI + SQLite (SQLAlchemy)
+FastAPI + SQLite (SQLAlchemy) + InfluxDB Cloud
 
 Endpoints:
-  GET  /api/sensores/actual      → Simula lectura de sensores
+  GET  /api/sensores/actual      → Lectura real desde InfluxDB (último punto ≤30 s)
   POST /api/sensores/validar     → Valida datos y registra alertas
   GET  /api/config/rangos        → Lista rangos configurados
   POST /api/config/rangos        → Crea o actualiza un rango
@@ -23,7 +23,7 @@ from sqlalchemy.orm import Session
 import models
 import schemas
 from database import engine, SessionLocal, get_db
-from services.sensor_mock import generar_datos_sensor
+from services.influxdb_service import obtener_ultimo_dato
 from services.validation import validar_todos_sensores
 
 
@@ -36,6 +36,7 @@ RANGOS_POR_DEFECTO = [
     {"sensor_nombre": "temperatura",      "umbral_minimo": 18.0,  "umbral_maximo": 35.0},
     {"sensor_nombre": "humedad_ambiental","umbral_minimo": 40.0,  "umbral_maximo": 80.0},
     {"sensor_nombre": "luz",              "umbral_minimo": 500.0, "umbral_maximo": 3000.0},
+    {"sensor_nombre": "co2",              "umbral_minimo": None,  "umbral_maximo": 1000.0},
 ]
 
 
@@ -97,15 +98,29 @@ app.add_middleware(
     "/api/sensores/actual",
     response_model=schemas.DatosSensor,
     tags=["Sensores"],
-    summary="Obtiene la lectura actual de sensores",
+    summary="Obtiene la lectura actual de sensores desde InfluxDB",
 )
 def obtener_sensores_actual():
     """
-    Simula la consulta a la base de datos externa de sensores IoT.
+    Consulta el punto más reciente (últimos 30 s) desde InfluxDB Cloud.
     Devuelve los valores actuales de: temperatura, humedad ambiental,
-    luz analógica y humedad de suelo analógica.
+    luz analógica, humedad de suelo analógica y CO₂ (ppm).
+
+    Responde HTTP 503 si no hay datos disponibles (simulador apagado
+    o sin conectividad con InfluxDB).
     """
-    return generar_datos_sensor()
+    try:
+        return obtener_ultimo_dato()
+    except RuntimeError as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(e),
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Error al conectar con InfluxDB: {e}",
+        )
 
 
 @app.post(

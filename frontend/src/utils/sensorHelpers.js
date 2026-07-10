@@ -71,6 +71,21 @@ export function getLuzInfo(rawValor, rangos) {
 }
 
 // ─────────────────────────────────────────────────────
+//  CO₂ — Calidad de Aire (ppm)
+//  400–1000 ppm normal, 1000–2000 warning, >2000 critical
+// ─────────────────────────────────────────────────────
+export function getCO2Info(valor, rangos) {
+  const max = rangos?.co2?.max ?? 1000
+
+  if (valor > 2000)         return { etiqueta: 'CO₂ Crítico ☠️',         estado: 'critical' }
+  if (valor > max + 500)    return { etiqueta: 'CO₂ Muy Elevado 😰',      estado: 'critical' }
+  if (valor > max)          return { etiqueta: 'CO₂ Elevado ⚠️',          estado: 'warning'  }
+  if (valor > max * 0.85)   return { etiqueta: 'CO₂ Moderado 🌬️',        estado: 'warning'  }
+  if (valor < 300)          return { etiqueta: 'CO₂ Muy Bajo 🌿',         estado: 'ok'       }
+  return                           { etiqueta: 'Calidad de Aire Óptima ✅', estado: 'ok'     }
+}
+
+// ─────────────────────────────────────────────────────
 //  Estado global de la planta
 // ─────────────────────────────────────────────────────
 export function getEstadoGlobal(estados) {

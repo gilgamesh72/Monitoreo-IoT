@@ -115,6 +115,7 @@ def _validar_individual(nombre: str, valor: float, rango: dict, db: Session) -> 
         "humedad_ambiental": "Humedad Amb.",
         "luz":               "Radiación Solar",
         "humedad_suelo":     "Humedad Suelo",
+        "co2":               "Calidad de Aire (CO₂)",
     }
     nombre_legible = NOMBRES.get(nombre, nombre)
 
@@ -140,6 +141,8 @@ def _validar_individual(nombre: str, valor: float, rango: dict, db: Session) -> 
         elif nombre == "luz":
             pct = int(valor / 4095 * 100)
             desc = f"{nombre_legible}: {pct}% de radiación — supera el máximo"
+        elif nombre == "co2":
+            desc = f"{nombre_legible}: {valor:.0f} ppm — supera el máximo aceptable ({max_val:.0f} ppm)"
         else:
             desc = f"{nombre_legible}: {valor:.0f} — supera el máximo ({max_val})"
 

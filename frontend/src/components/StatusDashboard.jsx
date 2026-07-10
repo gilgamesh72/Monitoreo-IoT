@@ -4,6 +4,7 @@ import {
   getTemperaturaInfo,
   getHumedadAmbInfo,
   getLuzInfo,
+  getCO2Info,
   getEstadoGlobal,
   isEstresHidrico,
 } from '../utils/sensorHelpers'
@@ -58,9 +59,10 @@ export default function StatusDashboard({ sensores, rangos, loading }) {
   const tempInfo   = getTemperaturaInfo(sensores.temperatura, rangos)
   const humAmbInfo = getHumedadAmbInfo(sensores.humedad_ambiental, rangos)
   const luzInfo    = getLuzInfo(sensores.luz, rangos)
+  const co2Info    = getCO2Info(sensores.co2, rangos)
 
   const estadoGlobal = getEstadoGlobal([
-    sueloInfo.estado, tempInfo.estado, humAmbInfo.estado, luzInfo.estado,
+    sueloInfo.estado, tempInfo.estado, humAmbInfo.estado, luzInfo.estado, co2Info.estado,
   ])
 
   // ✅ Bug fix: evaluar estrés hídrico con VALORES ACTUALES, no el historial
@@ -135,6 +137,20 @@ export default function StatusDashboard({ sensores, rangos, loading }) {
           estado={luzInfo.estado}
           percent={luzInfo.pct}
           unidad="rad."
+        />
+
+        {/* CO₂ — Calidad de Aire */}
+        <SensorCard
+          titulo="CO₂ Ambiente"
+          icono="💨"
+          valor={sensores.co2 != null ? Math.round(sensores.co2) : '--'}
+          unidad="ppm"
+          etiqueta={co2Info.etiqueta}
+          estado={co2Info.estado}
+          min={rangos?.co2?.min ?? undefined}
+          max={rangos?.co2?.max ?? 1000}
+          barValue={sensores.co2}
+          barMax={5000}
         />
 
       </div>

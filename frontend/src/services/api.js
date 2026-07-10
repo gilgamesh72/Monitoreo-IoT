@@ -2,7 +2,7 @@ import axios from 'axios'
 
 const API = axios.create({
   baseURL: 'http://localhost:8000',
-  timeout: 6000,
+  timeout: 15000,  // 15 s — InfluxDB Cloud puede tardar hasta ~8 s
   headers: { 'Content-Type': 'application/json' },
 })
 

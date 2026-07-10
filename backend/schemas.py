@@ -47,6 +47,7 @@ class DatosSensor(BaseModel):
     humedad_ambiental: float = Field(..., ge=0, le=100, description="Humedad ambiental en %")
     luz: float = Field(..., ge=0, le=4095, description="Radiación solar (valor analógico 0-4095)")
     humedad_suelo: float = Field(..., ge=0, le=4095, description="Humedad suelo analógica (mayor = más seco)")
+    co2: float = Field(..., ge=0, le=10000, description="Concentración de CO₂ en partes por millón (ppm)")
 
 
 class ResultadoValidacion(BaseModel):

@@ -127,6 +127,7 @@ export default function ConfigPanel({ rangos, onSave }) {
   const [tempMax,     setTempMax]     = useState(35)
   const [humAmbMin,   setHumAmbMin]   = useState(40)
   const [humAmbMax,   setHumAmbMax]   = useState(80)
+  const [co2Max,      setCo2Max]      = useState(1000)
   
   const [saving,  setSaving]  = useState(false)
   const [toast,   setToast]   = useState(null)
@@ -158,6 +159,7 @@ export default function ConfigPanel({ rangos, onSave }) {
     if (rangos.temperatura?.max != null) setTempMax(rangos.temperatura.max)
     if (rangos.humedad_ambiental?.min != null) setHumAmbMin(rangos.humedad_ambiental.min)
     if (rangos.humedad_ambiental?.max != null) setHumAmbMax(rangos.humedad_ambiental.max)
+    if (rangos.co2?.max != null) setCo2Max(rangos.co2.max)
   }, [rangos])
 
   // Asegurar que los mínimos nunca superen a los máximos
@@ -193,6 +195,11 @@ export default function ConfigPanel({ rangos, onSave }) {
           sensor_nombre:  'humedad_ambiental',
           umbral_minimo:  humAmbMin,
           umbral_maximo:  humAmbMax,
+        }),
+        actualizarRango({
+          sensor_nombre:  'co2',
+          umbral_minimo:  null,
+          umbral_maximo:  co2Max,
         }),
       ])
       setToast({ tipo: 'ok', msg: 'Configuración guardada correctamente.' })
@@ -396,6 +403,49 @@ export default function ConfigPanel({ rangos, onSave }) {
 
           <p className="text-[11px] text-amber-400/80 mt-3 bg-amber-500/5 border border-amber-500/20 rounded-lg px-2.5 py-1.5">
             💡 Alerta si la radiación es menor de <strong>{luzMinPct}%</strong> o mayor de <strong>{luzMaxPct}%</strong>.
+          </p>
+        </div>
+
+        {/* ── CO₂ / Calidad de Aire (slider) ────────────────── */}
+        <div className="bg-slate-800/70 rounded-2xl p-4 border border-slate-700/60">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="text-2xl">💨</span>
+            <div>
+              <p className="text-sm font-semibold text-slate-200">Calidad de Aire — CO₂</p>
+              <p className="text-[10px] text-slate-500">Umbral máximo permitido en ppm (partes por millón)</p>
+            </div>
+          </div>
+
+          <SliderField
+            label="Máximo de CO₂ aceptable"
+            value={co2Max}
+            onChange={setCo2Max}
+            min={400}
+            max={5000}
+            unit=" ppm"
+            description="← aire limpio · contaminado →"
+          />
+
+          {/* Visualización del rango aceptable */}
+          <div className="mt-4 bg-slate-900/50 rounded-xl p-3">
+            <p className="text-[10px] text-slate-500 mb-2 font-semibold uppercase tracking-wider">Zona de calidad de aire</p>
+            <div className="relative w-full h-4 bg-slate-700 rounded-full overflow-hidden">
+              {/* Zona verde (zona segura) */}
+              <div className="absolute left-0 top-0 h-full bg-emerald-500/50 rounded-l-full"
+                   style={{ width: `${Math.min(100, ((co2Max - 400) / (5000 - 400)) * 100)}%` }} />
+              {/* Zona roja (exceso de CO₂) */}
+              <div className="absolute right-0 top-0 h-full bg-red-500/40 rounded-r-full"
+                   style={{ width: `${Math.max(0, 100 - ((co2Max - 400) / (5000 - 400)) * 100)}%` }} />
+            </div>
+            <div className="flex justify-between text-[9px] mt-1.5">
+              <span className="text-emerald-400">✓ Seguro &lt;{co2Max} ppm</span>
+              <span className="text-emerald-400">✓ Zona normal</span>
+              <span className="text-red-400">&gt;{co2Max} ppm Alerta</span>
+            </div>
+          </div>
+
+          <p className="text-[11px] text-amber-400/80 mt-3 bg-amber-500/5 border border-amber-500/20 rounded-lg px-2.5 py-1.5">
+            💡 Se genera alerta cuando el CO₂ supera <strong>{co2Max} ppm</strong>. Valores &gt;2000 ppm activan alerta crítica.
           </p>
         </div>
 

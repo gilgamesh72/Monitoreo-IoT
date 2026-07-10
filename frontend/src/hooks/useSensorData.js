@@ -1,14 +1,17 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { getSensores, validarSensores, getRangos, getAlertas } from '../services/api'
 
-const POLL_INTERVAL_MS = 5000  // Actualiza cada 5 segundos
+// Pausa entre el final de una respuesta y el inicio de la siguiente petición.
+// (La consulta a InfluxDB puede tardar ~3-8 s, por lo que el intervalo real
+//  será: tiempo_de_respuesta + POLL_PAUSE_MS)
+const POLL_PAUSE_MS = 5000
 
 /**
  * Hook central que gestiona el estado de la aplicación IoT.
  *
- * - Hace polling de sensores y alertas cada 5 segundos.
- * - Dispara validación en el backend después de cada lectura.
- * - Expone funciones para refrescar rangos y alertas manualmente.
+ * - Usa polling SECUENCIAL (espera respuesta antes del siguiente ciclo).
+ * - Mantiene los últimos datos visibles incluso si hay un error puntual.
+ * - Dispara validación en el backend después de cada lectura exitosa.
  */
 export function useSensorData() {
   const [sensores, setSensores]     = useState(null)
@@ -17,7 +20,8 @@ export function useSensorData() {
   const [loading, setLoading]       = useState(true)
   const [error, setError]           = useState(null)
   const [lastUpdate, setLastUpdate] = useState(null)
-  const intervalRef = useRef(null)
+  const timerRef  = useRef(null)
+  const activeRef = useRef(true)   // false cuando el componente desmonta
 
   // ── Fetchers individuales ─────────────────────────────
 
@@ -59,22 +63,39 @@ export function useSensorData() {
         console.warn('[IoT] Error en validación:', e.message)
       }
     } catch (e) {
-      setError('No se puede conectar al servidor. Verifica que el backend esté corriendo.')
+      // Mantener los últimos datos visibles — solo mostramos el warning
+      // El polling continúa normalmente para recuperarse solo
+      const msg = e.response?.status === 503
+        ? 'InfluxDB sin datos recientes. Reintentando...'
+        : 'No se puede conectar al servidor. Verifica que el backend esté corriendo.'
+      setError(msg)
+      console.warn('[IoT] Error al obtener sensores:', e.message)
     } finally {
       setLoading(false)
     }
   }, [fetchAlertas])
 
-  // ── Efecto principal — carga inicial + polling ────────
+  // ── Efecto principal — carga inicial + polling SECUENCIAL ────────
+  // Usamos setTimeout recursivo para que cada ciclo espere la respuesta
+  // anterior. Así evitamos que requests lentas a InfluxDB se solapen.
 
   useEffect(() => {
-    fetchRangos()
-    fetchSensores()
+    activeRef.current = true
 
-    intervalRef.current = setInterval(fetchSensores, POLL_INTERVAL_MS)
+    const loop = async () => {
+      if (!activeRef.current) return
+      await fetchSensores()
+      if (activeRef.current) {
+        timerRef.current = setTimeout(loop, POLL_PAUSE_MS)
+      }
+    }
+
+    fetchRangos()
+    loop()
 
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
+      activeRef.current = false
+      if (timerRef.current) clearTimeout(timerRef.current)
     }
   }, [fetchRangos, fetchSensores])
 

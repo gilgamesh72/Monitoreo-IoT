@@ -15,6 +15,7 @@ def generar_datos_sensor() -> dict:
       - humedad_ambiental: valor en %   (típico: 20–95)
       - luz:               analógico    (0–4095, mayor = más luminoso)
       - humedad_suelo:     analógico    (0–4095, mayor = más SECO)
+      - co2:               ppm          (típico: 400–2000, crítico > 2000)
     """
     roll = random.random()
 
@@ -25,6 +26,7 @@ def generar_datos_sensor() -> dict:
             "humedad_ambiental": round(random.uniform(15.0, 38.0), 1),
             "luz": round(random.uniform(3100.0, 4095.0), 1),
             "humedad_suelo": round(random.uniform(3300.0, 4095.0), 1),
+            "co2": round(random.uniform(1800.0, 3500.0), 1),   # CO₂ elevado por calor/ventilación pobre
         }
 
     # Escenario temperatura elevada
@@ -34,6 +36,7 @@ def generar_datos_sensor() -> dict:
             "humedad_ambiental": round(random.uniform(30.0, 70.0), 1),
             "luz": round(random.uniform(800.0, 2800.0), 1),
             "humedad_suelo": round(random.uniform(1000.0, 2800.0), 1),
+            "co2": round(random.uniform(1000.0, 2200.0), 1),   # CO₂ moderadamente elevado
         }
 
     # Operación normal con variación natural
@@ -42,4 +45,5 @@ def generar_datos_sensor() -> dict:
         "humedad_ambiental": round(random.uniform(42.0, 78.0), 1),
         "luz": round(random.uniform(500.0, 2900.0), 1),
         "humedad_suelo": round(random.uniform(500.0, 3100.0), 1),
+        "co2": round(random.uniform(400.0, 900.0), 1),   # CO₂ normal (aire fresco)
     }
