@@ -44,7 +44,7 @@ _cache: dict = {}
 _FLUX_TEMPLATE = """
 from(bucket: "{bucket}")
   |> range(start: {ventana})
-  |> filter(fn: (r) => r["_measurement"] == "lectura_sensores")
+  |> filter(fn: (r) => r["_measurement"] == "sensores_v3")
   |> filter(fn: (r) => r["_field"] == "co2_ppm"
                     or r["_field"] == "humedad"
                     or r["_field"] == "humedad_suelo"
@@ -54,7 +54,7 @@ from(bucket: "{bucket}")
 """
 
 # Primero -2m (rápido ~1-2s), luego -24h como fallback (lento, solo si simulador parado)
-_VENTANAS = ["-2m", "-24h"]
+_VENTANAS = ["-2m", "-5m"]
 
 
 def _query_ventana(ventana: str) -> dict:

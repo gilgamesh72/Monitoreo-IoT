@@ -4,7 +4,7 @@ import { getSensores, validarSensores, getRangos, getAlertas } from '../services
 // Pausa entre el final de una respuesta y el inicio de la siguiente petición.
 // (La consulta a InfluxDB puede tardar ~3-8 s, por lo que el intervalo real
 //  será: tiempo_de_respuesta + POLL_PAUSE_MS)
-const POLL_PAUSE_MS = 5000
+const POLL_PAUSE_MS = 2000
 
 /**
  * Hook central que gestiona el estado de la aplicación IoT.

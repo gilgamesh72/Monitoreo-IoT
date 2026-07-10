@@ -8,11 +8,10 @@ const org = process.env.INFLUX_ORG;
 const bucket = process.env.INFLUX_BUCKET;
 
 const client = new InfluxDB({ url, token });
+// 🚨 LA FORMA CORRECTA: Las opciones van directas, sin la palabra "writeOptions:"
 const writeClient = client.getWriteApi(org, bucket, 'ns', {
-  writeOptions: {
-    batchSize: 1, // Envía el dato de inmediato, sin acumular
-    flushInterval: 1000 // Si no se llena, envía cada 1 segundo máximo
-  }
+  batchSize: 1,       // Fuerza el envío INMEDIATO del dato a internet
+  flushInterval: 1000 // Asegura que no se retengan datos localmente
 });
 console.log("🚀 Simulador de sensores activado para la presentación...");
 
@@ -28,16 +27,18 @@ setInterval(() => {
 
   // 3. Estructuramos el punto de datos
   // 'lectura_sensores' actuará como el nombre de tu tabla
-  const punto = new Point('lectura_sensores')
+  const punto = new Point('sensores_v3')
     .tag('dispositivo', 'modulo_principal') // Un tag para identificar de dónde viene
     .floatField('co2_ppm', co2)
     .floatField('humedad', humedad)
     .intField('humedad_suelo', humedad_suelo)
     .intField('luz', luz)
-    .floatField('temperatura', temperatura);
+    .floatField('temperatura', temperatura)
+    .timestamp(new Date());
   // El campo 'time' (dateTime:RFC339) InfluxDB lo genera SOLITO en la nube
   // asignándole la hora exacta actual en nanosegundos en cuanto recibe el punto.
 
+  punto.timestamp('');
   // 4. Enviamos a la nube
   writeClient.writePoint(punto);
   console.log(`[Enviado] CO2: ${co2.toFixed(1)} | Temp: ${temperatura.toFixed(1)}°C | Luz: ${luz}`);
